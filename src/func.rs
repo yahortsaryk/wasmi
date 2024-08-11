@@ -68,8 +68,14 @@ impl fmt::Debug for FuncInstance {
             FuncInstanceInternal::Internal { ref signature, ref body, ref module } => {
                 // We can't write description of self.module here, because it generate
                 // debug string for function instances and this will lead to infinite loop.
+                // if let Some(module_instance) = module.upgrade() {
+                //     write!(f, "Internal {{ signature={:?} }} body={:?} module_instance={:?}", signature, body, module_instance)
+                // } else {
+                //     write!(f, "Internal {{ signature={:?} }} body={:?}", signature, body)
+                // }
+
                 if let Some(module_instance) = module.upgrade() {
-                    write!(f, "Internal {{ signature={:?} }} body={:?} module_instance={:?}", signature, body, module_instance)
+                    write!(f, "Internal {{ signature={:?} }} body={:?}", signature, body)
                 } else {
                     write!(f, "Internal {{ signature={:?} }} body={:?}", signature, body)
                 }
