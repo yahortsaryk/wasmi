@@ -537,7 +537,7 @@ pub(crate) enum InstructionInternal {
 
 #[derive(Debug, Clone)]
 pub struct Instructions {
-    vec: Vec<InstructionInternal>,
+    pub vec: Vec<InstructionInternal>,
 }
 
 impl Instructions {

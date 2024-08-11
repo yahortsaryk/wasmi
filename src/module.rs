@@ -164,12 +164,12 @@ impl ExternVal {
 /// [`invoke_export`]: #method.invoke_export
 #[derive(Debug)]
 pub struct ModuleInstance {
-    signatures: RefCell<Vec<Rc<Signature>>>,
-    tables: RefCell<Vec<TableRef>>,
-    funcs: RefCell<Vec<FuncRef>>,
-    memories: RefCell<Vec<MemoryRef>>,
-    globals: RefCell<Vec<GlobalRef>>,
-    exports: RefCell<BTreeMap<String, ExternVal>>,
+    pub signatures: RefCell<Vec<Rc<Signature>>>,
+    pub tables: RefCell<Vec<TableRef>>,
+    pub funcs: RefCell<Vec<FuncRef>>,
+    pub memories: RefCell<Vec<MemoryRef>>,
+    pub globals: RefCell<Vec<GlobalRef>>,
+    pub exports: RefCell<BTreeMap<String, ExternVal>>,
 }
 
 impl ModuleInstance {

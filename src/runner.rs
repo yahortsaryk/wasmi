@@ -307,14 +307,14 @@ impl Interpreter {
                 RunResult::Return => {
                     log::info!(target: LOG_TARGET, "LOOP step A");
                     if self.call_stack.is_empty() {
-                    log::info!(target: LOG_TARGET, "LOOP step A.1");
+                        log::info!(target: LOG_TARGET, "LOOP step A.1");
                         // This was the last frame in the call stack. This means we
                         // are done executing.
                         return Ok(());
                     }
                 }
                 RunResult::NestedCall(nested_func) => {
-                    log::info!(target: LOG_TARGET, "LOOP step B");
+                    log::info!(target: LOG_TARGET, "LOOP step B nested_func={:?}", nested_func);
                     if self.call_stack.is_full() {
                         log::info!(target: LOG_TARGET, "LOOP step B.1");
                         return Err(TrapCode::StackOverflow.into());
@@ -332,19 +332,19 @@ impl Interpreter {
                             self.call_stack.push(nested_context);
                             log::info!(target: LOG_TARGET, "LOOP step B.2 Internal[4]");
                         }
-                        FuncInstanceInternal::Host { ref signature, ref host_func_index } => {
-                            log::info!(target: LOG_TARGET, "LOOP step B.2 Host[1] host_func_index={:?}", host_func_index);
+                        FuncInstanceInternal::Host { ref signature, .. } => {
+                            log::info!(target: LOG_TARGET, "LOOP step B.2 Host[1] nested_func={:?}", nested_func);
                             prepare_function_args(
                                 signature,
                                 &mut self.value_stack,
                                 &mut self.scratch,
                             );
 
-                            log::info!(target: LOG_TARGET, "LOOP step B.2 Host[2] host_func_index={:?}", host_func_index);
+                            log::info!(target: LOG_TARGET, "LOOP step B.2 Host[2] nested_func={:?}", nested_func);
                             // We push the function context first. If the VM is not resumable, it does no harm. If it is, we then save the context here.
                             self.call_stack.push(function_context);
 
-                            log::info!(target: LOG_TARGET, "LOOP step B.2 Host[3] host_func_index={:?}", host_func_index);
+                            log::info!(target: LOG_TARGET, "LOOP step B.2 Host[3] nested_func={:?}", nested_func);
 
                             let return_val = match FuncInstance::invoke(
                                 &nested_func,
@@ -352,13 +352,13 @@ impl Interpreter {
                                 externals,
                             ) {
                                 Ok(val) => {
-                                    log::info!(target: LOG_TARGET, "LOOP step B.2 Host[4] host_func_index={:?}, val={:?}", host_func_index, val);
+                                    log::info!(target: LOG_TARGET, "LOOP step B.2 Host[4] nested_func={:?}, val={:?}", nested_func, val);
                                     val
                                 },
                                 Err(trap) => {
-                                    log::info!(target: LOG_TARGET, "LOOP step B.2 Host[5] host_func_index={:?}, trap={:?}", host_func_index, trap);
+                                    log::info!(target: LOG_TARGET, "LOOP step B.2 Host[5] nested_func={:?}, trap={:?}", nested_func, trap);
                                     if trap.is_host() {
-                                        log::info!(target: LOG_TARGET, "LOOP step B.2 Host[6] host_func_index={:?}", host_func_index);
+                                        log::info!(target: LOG_TARGET, "LOOP step B.2 Host[6] nested_func={:?}", nested_func);
                                         self.state = InterpreterState::Resumable(
                                             nested_func.signature().return_type(),
                                         );
@@ -372,21 +372,21 @@ impl Interpreter {
                             // Check if `return_val` matches the signature.
                             let value_ty = return_val.as_ref().map(|val| val.value_type());
 
-                            log::info!(target: LOG_TARGET, "LOOP step B.4");
+                            log::info!(target: LOG_TARGET, "LOOP step B.4 value_ty={:?}", value_ty);
 
                             let expected_ty = nested_func.signature().return_type();
 
-                            log::info!(target: LOG_TARGET, "LOOP step B.5");
+                            log::info!(target: LOG_TARGET, "LOOP step B.5 expected_ty={:?}", expected_ty);
 
                             if value_ty != expected_ty {
-                                log::info!(target: LOG_TARGET, "LOOP step B.5.1");
+                                log::info!(target: LOG_TARGET, "LOOP step B.5.1 TRAP UnexpectedSignature");
                                 return Err(TrapCode::UnexpectedSignature.into());
                             }
 
                             log::info!(target: LOG_TARGET, "LOOP step B.6");
 
                             if let Some(return_val) = return_val {
-                                log::info!(target: LOG_TARGET, "LOOP step B.6.1");
+                                log::info!(target: LOG_TARGET, "LOOP step B.6.1 return_val={:?}", return_val);
                                 self.value_stack
                                     .push(return_val.into())
                                     .map_err(Trap::from)?;

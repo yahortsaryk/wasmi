@@ -24,7 +24,7 @@ pub const LOG_TARGET: &str = "wasmi-0.13.2";
 ///
 /// [`FuncInstance`]: struct.FuncInstance.html
 #[derive(Clone, Debug)]
-pub struct FuncRef(Rc<FuncInstance>);
+pub struct FuncRef(pub Rc<FuncInstance>);
 
 impl ::core::ops::Deref for FuncRef {
     type Target = FuncInstance;
@@ -50,7 +50,7 @@ impl ::core::ops::Deref for FuncRef {
 pub struct FuncInstance(FuncInstanceInternal);
 
 #[derive(Clone)]
-pub(crate) enum FuncInstanceInternal {
+pub enum FuncInstanceInternal {
     Internal {
         signature: Rc<Signature>,
         module: Weak<ModuleInstance>,
@@ -65,13 +65,18 @@ pub(crate) enum FuncInstanceInternal {
 impl fmt::Debug for FuncInstance {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self.as_internal() {
-            FuncInstanceInternal::Internal { ref signature, .. } => {
+            FuncInstanceInternal::Internal { ref signature, ref body, ref module } => {
                 // We can't write description of self.module here, because it generate
                 // debug string for function instances and this will lead to infinite loop.
-                write!(f, "Internal {{ signature={:?} }}", signature,)
+                if let Some(module_instance) = module.upgrade() {
+                    write!(f, "Internal {{ signature={:?} }} body={:?} module_instance={:?}", signature, body, module_instance)
+                } else {
+                    write!(f, "Internal {{ signature={:?} }} body={:?}", signature, body)
+                }
+          
             }
-            FuncInstanceInternal::Host { ref signature, .. } => {
-                write!(f, "Host {{ signature={:?} }}", signature)
+            FuncInstanceInternal::Host { ref signature, ref host_func_index } => {
+                write!(f, "Host {{ signature={:?} }} host_func_index={:?}", signature, host_func_index)
             }
         }
     }
