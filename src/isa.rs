@@ -349,7 +349,7 @@ pub enum Instruction<'a> {
 /// When returning instructions we convert to `Instruction`, whose `BrTable` variant internally
 /// borrows the list of instructions and returns targets by reading it.
 #[derive(Copy, Debug, Clone, PartialEq, Eq)]
-pub(crate) enum InstructionInternal {
+pub enum InstructionInternal {
     GetLocal(u32),
     SetLocal(u32),
     TeeLocal(u32),

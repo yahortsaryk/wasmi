@@ -324,13 +324,13 @@ impl Interpreter {
 
                     match *nested_func.as_internal() {
                         FuncInstanceInternal::Internal { .. } => {
-                            log::info!(target: LOG_TARGET, "LOOP step B.2 Internal[1]");
+                            log::info!(target: LOG_TARGET, "LOOP step B.2 Internal[1] nested_func={:?}", nested_func);
                             let nested_context = FunctionContext::new(nested_func.clone());
-                            log::info!(target: LOG_TARGET, "LOOP step B.2 Internal[2]");
+                            log::info!(target: LOG_TARGET, "LOOP step B.2 Internal[2] nested_func={:?}", nested_func);
                             self.call_stack.push(function_context);
-                            log::info!(target: LOG_TARGET, "LOOP step B.2 Internal[3]");
+                            log::info!(target: LOG_TARGET, "LOOP step B.2 Internal[3] nested_func={:?}", nested_func);
                             self.call_stack.push(nested_context);
-                            log::info!(target: LOG_TARGET, "LOOP step B.2 Internal[4]");
+                            log::info!(target: LOG_TARGET, "LOOP step B.2 Internal[4] nested_func={:?}", nested_func);
                         }
                         FuncInstanceInternal::Host { ref signature, .. } => {
                             log::info!(target: LOG_TARGET, "LOOP step B.2 Host[1] nested_func={:?}", nested_func);
