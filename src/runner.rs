@@ -733,11 +733,11 @@ impl Interpreter {
                 FuncInstanceInternal::Internal { ref signature, ref body, ref module } => {
                     if 30u32 == body.code.vec.len().try_into().unwrap() && 0u32 == body.locals.len().try_into().unwrap() {
                         if let Some(module) = module.upgrade() {
-                            display_module("run_call 142 && 1 --->", &module)
+                            display_module("run_call_indirect 30 && 0 --->", &module)
                         }
                     } else if 142u32 == body.code.vec.len().try_into().unwrap() && 1u32 == body.locals.len().try_into().unwrap() {
                         if let Some(module) = module.upgrade() {
-                            display_module("run_call 142 && 1 --->", &module)
+                            display_module("run_call_indirect 142 && 1 --->", &module)
                         }
                     }
                 }
