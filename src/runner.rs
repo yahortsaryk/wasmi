@@ -289,12 +289,17 @@ impl Interpreter {
 
             if function_body.code.vec.len() == 293 && function_body.locals.len() == 1 { // dispatch_thunk
                 log::info!(target: LOG_TARGET, "LOOP step 3");
-                display_module("running dispatch_thunk", &function_context.module.0);
+                display_module("before running dispatch_thunk", &function_context.module.0);
             }
 
             let function_return = self
                 .do_run_function(&mut function_context, &function_body.code)
                 .map_err(Trap::from)?;
+
+            if function_body.code.vec.len() == 293 && function_body.locals.len() == 1 { // dispatch_thunk
+                log::info!(target: LOG_TARGET, "LOOP step 3");
+                display_module("after running running dispatch_thunk", &function_context.module.0);
+            }
 
             log::info!(target: LOG_TARGET, "LOOP step 5");
             match function_return {
@@ -706,10 +711,12 @@ impl Interpreter {
             FuncInstanceInternal::Internal { ref signature, ref body, ref module } => {
                 if 30u32 == body.code.vec.len().try_into().unwrap() && 0u32 == body.locals.len().try_into().unwrap() {
                     if let Some(module) = module.upgrade() {
+                        log::info!("run_call func_idx={:?}", func_idx);
                         display_module("run_call 30 && 0 --->", &module)
                     }
                 } else if 142u32 == body.code.vec.len().try_into().unwrap() && 1u32 == body.locals.len().try_into().unwrap() {
                     if let Some(module) = module.upgrade() {
+                        log::info!("run_call func_idx={:?}", func_idx);
                         display_module("run_call 142 && 1 --->", &module)
                     }
                 }
@@ -739,10 +746,12 @@ impl Interpreter {
                 FuncInstanceInternal::Internal { ref signature, ref body, ref module } => {
                     if 30u32 == body.code.vec.len().try_into().unwrap() && 0u32 == body.locals.len().try_into().unwrap() {
                         if let Some(module) = module.upgrade() {
+                            log::info!("run_call_indirect signature_idx={:?}", signature_idx);
                             display_module("run_call_indirect 30 && 0 --->", &module)
                         }
                     } else if 142u32 == body.code.vec.len().try_into().unwrap() && 1u32 == body.locals.len().try_into().unwrap() {
                         if let Some(module) = module.upgrade() {
+                            log::info!("run_call_indirect signature_idx={:?}", signature_idx);
                             display_module("run_call_indirect 142 && 1 --->", &module)
                         }
                     }
