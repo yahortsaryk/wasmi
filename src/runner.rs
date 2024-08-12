@@ -1,12 +1,5 @@
 use crate::{
-    func::{FuncInstance, FuncInstanceInternal, FuncRef},
-    host::Externals,
-    isa,
-    memory::MemoryRef,
-    memory_units::Pages,
-    module::ModuleRef,
-    nan_preserving_float::{F32, F64},
-    value::{
+    func::{FuncInstance, FuncInstanceInternal, FuncRef}, host::Externals, isa, memory::MemoryRef, memory_units::Pages, module::ModuleRef, nan_preserving_float::{F32, F64}, value::{
         ArithmeticOps,
         ExtendInto,
         Float,
@@ -15,18 +8,13 @@ use crate::{
         TransmuteInto,
         TryTruncateInto,
         WrapInto,
-    },
-    RuntimeValue,
-    Signature,
-    Trap,
-    TrapCode,
-    ValueType,
+    }, ModuleInstance, RuntimeValue, Signature, Trap, TrapCode, ValueType
 };
 use alloc::{boxed::Box, vec::Vec};
 use core::{fmt, ops, u32, usize};
 use parity_wasm::elements::Local;
 use validation::{DEFAULT_MEMORY_INDEX, DEFAULT_TABLE_INDEX};
-
+use std::rc::Rc;
 /// Maximum number of bytes on the value stack.
 pub const DEFAULT_VALUE_STACK_LIMIT: usize = 1024 * 1024;
 
@@ -277,7 +265,7 @@ impl Interpreter {
         externals: &'a mut E,
     ) -> Result<(), Trap> {
         loop {
-            log::info!(target: LOG_TARGET, "LOOP step 1");
+            log::info!(target: LOG_TARGET, "LOOP step 1 startng with call_stack.len()={:?}", self.call_stack.buf.len());
             let mut function_context = self.call_stack.pop().expect(
                 "on loop entry - not empty; on loop continue - checking for emptiness; qed",
             );
@@ -297,7 +285,7 @@ impl Interpreter {
                 log::info!(target: LOG_TARGET, "LOOP step 3.2");
             }
 
-            log::info!(target: LOG_TARGET, "LOOP step 4");
+            log::info!(target: LOG_TARGET, "LOOP step 4 running function ---> {:?}", function_ref);
             let function_return = self
                 .do_run_function(&mut function_context, &function_body.code)
                 .map_err(Trap::from)?;
@@ -711,16 +699,12 @@ impl Interpreter {
         match *func.as_internal() {
             FuncInstanceInternal::Internal { ref signature, ref body, ref module } => {
                 if 30u32 == body.code.vec.len().try_into().unwrap() && 0u32 == body.locals.len().try_into().unwrap() {
-                    if let Some(memory) = module.upgrade() {
-                        if let Some(memory_ref) = memory.memory_by_index(DEFAULT_MEMORY_INDEX) {
-                            display_memory_ref("run_call 30 && 0 --->", &memory_ref)
-                        }
+                    if let Some(module) = module.upgrade() {
+                        display_module("run_call 30 && 0 --->", &module)
                     }
                 } else if 142u32 == body.code.vec.len().try_into().unwrap() && 1u32 == body.locals.len().try_into().unwrap() {
-                    if let Some(memory) = module.upgrade() {
-                        if let Some(memory_ref) = memory.memory_by_index(DEFAULT_MEMORY_INDEX) {
-                            display_memory_ref("run_call 142 && 1 --->", &memory_ref)
-                        }
+                    if let Some(module) = module.upgrade() {
+                        display_module("run_call 142 && 1 --->", &module)
                     }
                 }
             }
@@ -748,16 +732,12 @@ impl Interpreter {
             match *func_ref.as_internal() {
                 FuncInstanceInternal::Internal { ref signature, ref body, ref module } => {
                     if 30u32 == body.code.vec.len().try_into().unwrap() && 0u32 == body.locals.len().try_into().unwrap() {
-                        if let Some(memory) = module.upgrade() {
-                            if let Some(memory_ref) = memory.memory_by_index(DEFAULT_MEMORY_INDEX) {
-                                display_memory_ref("run_call_indirect 30 && 0 --->", &memory_ref)
-                            }
+                        if let Some(module) = module.upgrade() {
+                            display_module("run_call 142 && 1 --->", &module)
                         }
                     } else if 142u32 == body.code.vec.len().try_into().unwrap() && 1u32 == body.locals.len().try_into().unwrap() {
-                        if let Some(memory) = module.upgrade() {
-                            if let Some(memory_ref) = memory.memory_by_index(DEFAULT_MEMORY_INDEX) {
-                                display_memory_ref("run_call_indirect 142 && 1 --->", &memory_ref)
-                            }
+                        if let Some(module) = module.upgrade() {
+                            display_module("run_call 142 && 1 --->", &module)
                         }
                     }
                 }
@@ -1676,25 +1656,40 @@ impl Default for StackRecycler {
     }
 }
 
-fn display_memory_ref(method: &'static str, memory: &MemoryRef) {
-	let limits = memory.0.limits.clone();
-	let initial = memory.0.initial;
-	let maximum = memory.0.maximum;
-	let current_size = memory.0.current_size.clone();
-	let buffer = memory.0.buffer.borrow();
-	let buffer_slice = buffer.as_slice();
-	let buffer_hash = sp_core_hashing::blake2_256(buffer_slice);
-	let buffer_hash_hex_string: String =
-		buffer_hash.iter().map(|byte| format!("{:02x}", byte)).collect();
+fn display_module(method: &'static str, module: &Rc<ModuleInstance>) {
+    if let Some(memory_ref) = module.memory_by_index(DEFAULT_MEMORY_INDEX) {
+        let memories_len: u32 = module.memories.borrow().len().try_into().unwrap();
+        let tables_len: u32 = module.tables.borrow().len().try_into().unwrap();
+        let funcs_len: u32 = module.funcs.borrow().len().try_into().unwrap();
+        let globals_len: u32 = module.globals.borrow().len().try_into().unwrap();
+        let exports_len: u32 = module.exports.borrow().len().try_into().unwrap();
+        let signatures_len: u32 = module.signatures.borrow().len().try_into().unwrap();
 
-	log::info!(
-		"MemoryRef {} ===> buffer_hash={:?} limits={:?}, initial={:?}, maximum={:?}, current_size={:?}, buffer={:?}",
-		method,
-		buffer_hash_hex_string,
-		limits,
-		initial,
-		maximum,
-		current_size,
-		buffer.len()
-	);
+        let limits = memory_ref.0.limits.clone();
+        let initial = memory_ref.0.initial;
+        let maximum = memory_ref.0.maximum;
+        let current_size = memory_ref.0.current_size.clone();
+        let buffer = memory_ref.0.buffer.borrow();
+        let buffer_slice = buffer.as_slice();
+        let buffer_hash = sp_core_hashing::blake2_256(buffer_slice);
+        let buffer_hash_hex_string: String =
+            buffer_hash.iter().map(|byte| format!("{:02x}", byte)).collect(); 
+
+        log::info!(
+            "MemoryRef {} ===> buffer_hash={:?} limits={:?}, initial={:?}, maximum={:?}, current_size={:?}, buffer={:?}, memories_len={:?}, tables_len={:?}, funcs_len={:?}, globals_len={:?}, exports_len={:?}, signatures_len={:?}",
+            method,
+            buffer_hash_hex_string,
+            limits,
+            initial,
+            maximum,
+            current_size,
+            buffer.len(),
+            memories_len,
+            tables_len,
+            funcs_len,
+            globals_len,
+            exports_len,
+            signatures_len
+        );
+    }
 }
