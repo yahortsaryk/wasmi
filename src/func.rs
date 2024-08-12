@@ -75,9 +75,9 @@ impl fmt::Debug for FuncInstance {
                 // }
 
                 if let Some(module_instance) = module.upgrade() {
-                    write!(f, "Internal {{ signature={:?} }} body={:?}", signature, body)
+                    write!(f, "Internal {{ signature={:?} }} body.code.len()={:?}, body.locals.len()={:?}", signature, body.code.vec.len(), body.locals.len())
                 } else {
-                    write!(f, "Internal {{ signature={:?} }} body={:?}", signature, body)
+                    write!(f, "Internal {{ signature={:?} }} body.code.len()={:?}, body.locals.len()={:?}", signature, body.code.vec.len(), body.locals.len())
                 }
           
             }
