@@ -16,6 +16,11 @@ wasmi_core = { version = "0.2.1", path = "core", default-features = false }
 validation = { package = "wasmi-validation", version = "0.5.0", path = "validation", default-features = false }
 parity-wasm = { version = "0.45.0", default-features = false }
 log = "0.4.17"
+sp-core-hashing = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.33" }
+#schnorrkel = { version = "=0.9.1", features = [
+#	"preaudit_deprecated",
+#	"u64_backend",
+#], default-features = false, optional = true }
 
 [dev-dependencies]
 assert_matches = "1.5"

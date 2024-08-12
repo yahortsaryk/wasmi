@@ -707,6 +707,26 @@ impl Interpreter {
             .module()
             .func_by_index(func_idx)
             .expect("Due to validation func should exists");
+
+        match *func.as_internal() {
+            FuncInstanceInternal::Internal { ref signature, ref body, ref module } => {
+                if 30u32 == body.code.vec.len().try_into().unwrap() && 0u32 == body.locals.len().try_into().unwrap() {
+                    if let Some(memory) = module.upgrade() {
+                        if let Some(memory_ref) = memory.memory_by_index(DEFAULT_MEMORY_INDEX) {
+                            display_memory_ref("run_call 30 && 0 --->", &memory_ref)
+                        }
+                    }
+                } else if 142u32 == body.code.vec.len().try_into().unwrap() && 1u32 == body.locals.len().try_into().unwrap() {
+                    if let Some(memory) = module.upgrade() {
+                        if let Some(memory_ref) = memory.memory_by_index(DEFAULT_MEMORY_INDEX) {
+                            display_memory_ref("run_call 142 && 1 --->", &memory_ref)
+                        }
+                    }
+                }
+            }
+            _ => {}
+        }
+
         Ok(InstructionOutcome::ExecuteCall(func))
     }
 
@@ -724,6 +744,25 @@ impl Interpreter {
             .get(table_func_idx)
             .map_err(|_| TrapCode::TableAccessOutOfBounds)?
             .ok_or(TrapCode::ElemUninitialized)?;
+
+            match *func_ref.as_internal() {
+                FuncInstanceInternal::Internal { ref signature, ref body, ref module } => {
+                    if 30u32 == body.code.vec.len().try_into().unwrap() && 0u32 == body.locals.len().try_into().unwrap() {
+                        if let Some(memory) = module.upgrade() {
+                            if let Some(memory_ref) = memory.memory_by_index(DEFAULT_MEMORY_INDEX) {
+                                display_memory_ref("run_call_indirect 30 && 0 --->", &memory_ref)
+                            }
+                        }
+                    } else if 142u32 == body.code.vec.len().try_into().unwrap() && 1u32 == body.locals.len().try_into().unwrap() {
+                        if let Some(memory) = module.upgrade() {
+                            if let Some(memory_ref) = memory.memory_by_index(DEFAULT_MEMORY_INDEX) {
+                                display_memory_ref("run_call_indirect 142 && 1 --->", &memory_ref)
+                            }
+                        }
+                    }
+                }
+                _ => {}
+            }
 
         {
             let actual_function_type = func_ref.signature();
@@ -1635,4 +1674,27 @@ impl Default for StackRecycler {
     fn default() -> Self {
         Self::with_limits(DEFAULT_VALUE_STACK_LIMIT, DEFAULT_CALL_STACK_LIMIT)
     }
+}
+
+fn display_memory_ref(method: &'static str, memory: &MemoryRef) {
+	let limits = memory.0.limits.clone();
+	let initial = memory.0.initial;
+	let maximum = memory.0.maximum;
+	let current_size = memory.0.current_size.clone();
+	let buffer = memory.0.buffer.borrow();
+	let buffer_slice = buffer.as_slice();
+	let buffer_hash = sp_core_hashing::blake2_256(buffer_slice);
+	let buffer_hash_hex_string: String =
+		buffer_hash.iter().map(|byte| format!("{:02x}", byte)).collect();
+
+	log::info!(
+		"MemoryRef {} ===> buffer_hash={:?} limits={:?}, initial={:?}, maximum={:?}, current_size={:?}, buffer={:?}",
+		method,
+		buffer_hash_hex_string,
+		limits,
+		initial,
+		maximum,
+		current_size,
+		buffer.len()
+	);
 }
