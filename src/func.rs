@@ -65,7 +65,11 @@ pub enum FuncInstanceInternal {
 impl fmt::Debug for FuncInstance {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self.as_internal() {
-            FuncInstanceInternal::Internal { ref signature, ref body, ref module } => {
+            FuncInstanceInternal::Internal {
+                ref signature,
+                ref body,
+                ref module,
+            } => {
                 // We can't write description of self.module here, because it generate
                 // debug string for function instances and this will lead to infinite loop.
                 // if let Some(module_instance) = module.upgrade() {
@@ -79,10 +83,16 @@ impl fmt::Debug for FuncInstance {
                 } else {
                     write!(f, "Internal {{ signature={:?} }} body.code.len()={:?}, body.locals.len()={:?}", signature, body.code.vec.len(), body.locals.len())
                 }
-          
             }
-            FuncInstanceInternal::Host { ref signature, ref host_func_index } => {
-                write!(f, "Host {{ signature={:?} }} host_func_index={:?}", signature, host_func_index)
+            FuncInstanceInternal::Host {
+                ref signature,
+                ref host_func_index,
+            } => {
+                write!(
+                    f,
+                    "Host {{ signature={:?} }} host_func_index={:?}",
+                    signature, host_func_index
+                )
             }
         }
     }
@@ -117,7 +127,7 @@ impl FuncInstance {
         }
     }
 
-    pub(crate) fn as_internal(&self) -> &FuncInstanceInternal {
+    pub fn as_internal(&self) -> &FuncInstanceInternal {
         &self.0
     }
 

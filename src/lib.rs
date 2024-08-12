@@ -256,7 +256,7 @@ impl From<validation::Error> for Error {
     }
 }
 
-mod func;
+pub mod func;
 mod global;
 mod host;
 mod imports;

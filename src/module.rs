@@ -188,7 +188,7 @@ impl ModuleInstance {
         self.memories.borrow_mut().get(idx as usize).cloned()
     }
 
-    pub(crate) fn table_by_index(&self, idx: u32) -> Option<TableRef> {
+    pub fn table_by_index(&self, idx: u32) -> Option<TableRef> {
         self.tables.borrow_mut().get(idx as usize).cloned()
     }
 

@@ -286,6 +286,12 @@ impl Interpreter {
             }
 
             log::info!(target: LOG_TARGET, "LOOP step 4 running function ---> {:?}", function_ref);
+
+            if function_body.code.vec.len() == 293 && function_body.locals.len() == 1 { // dispatch_thunk
+                log::info!(target: LOG_TARGET, "LOOP step 3");
+                display_module("running dispatch_thunk", &function_context.module.0);
+            }
+
             let function_return = self
                 .do_run_function(&mut function_context, &function_body.code)
                 .map_err(Trap::from)?;
